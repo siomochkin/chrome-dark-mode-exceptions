@@ -1,0 +1,79 @@
+name: Build & release
+
+# Every push builds the extension zip (downloadable from the run page).
+# On the default branch, a GitHub Release is created whenever the
+# "version" in extension/manifest.json is one that has not been released yet.
+on:
+  push:
+    paths:
+      - "extension/**"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read and validate manifest
+        id: meta
+        run: |
+          jq -e . extension/manifest.json > /dev/null
+          VERSION=$(jq -r .version extension/manifest.json)
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "::error::manifest version '$VERSION' is not a valid Chrome extension version"
+            exit 1
+          fi
+          for f in $(jq -r '[.background.service_worker, .options_ui.page, (.icons[]?), (.action.default_icon[]?)] | .[] | select(. != null)' extension/manifest.json) optout.css; do
+            test -f "extension/$f" || { echo "::error::missing file extension/$f"; exit 1; }
+          done
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "zip=dark-mode-exceptions-v$VERSION.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Build zip
+        run: |
+          cd extension
+          zip -r -X "../${{ steps.meta.outputs.zip }}" . -x '.*' -x '__MACOSX/*'
+          cd ..
+          unzip -l "${{ steps.meta.outputs.zip }}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dark-mode-exceptions-v${{ steps.meta.outputs.version }}
+          path: extension/
+          if-no-files-found: error
+
+      - name: Create release (default branch, new version only)
+        if: github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.meta.outputs.version }}
+          ZIP: ${{ steps.meta.outputs.zip }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists; bump the version in extension/manifest.json to publish a new one."
+            exit 0
+          fi
+          cat > notes.md <<NOTES
+          ## Install
+
+          1. Download **$ZIP** below and unzip it.
+          2. Open \`chrome://extensions\` and turn on **Developer mode**.
+          3. Click **Load unpacked** and select the unzipped folder.
+
+          To update, unzip the new version over the old folder and click the reload icon on the extension's card in \`chrome://extensions\`.
+          NOTES
+          gh release create "$TAG" "$ZIP" \
+            --target "$GITHUB_SHA" \
+            --title "Dark Mode Exceptions $TAG" \
+            --notes-file notes.md \
+            --generate-notes

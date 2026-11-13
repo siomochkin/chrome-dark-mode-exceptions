@@ -5,10 +5,15 @@ A Chrome extension that turns off **Auto Dark Mode for Web Contents**
 
 ## Install
 
-1. Download or clone this repository.
+1. Download the latest zip from the
+   [Releases page](https://github.com/siomochkin/chrome-dark-mode-exceptions/releases/latest)
+   and unzip it.
 2. Open `chrome://extensions` and turn on **Developer mode** (top right).
-3. Click **Load unpacked** and select the `extension` folder.
+3. Click **Load unpacked** and select the unzipped folder.
 4. Pin the extension to the toolbar (puzzle-piece icon → pin).
+
+To update, unzip the new version over the old folder and click the reload
+icon on the extension's card in `chrome://extensions`.
 
 ## Use
 
@@ -51,3 +56,15 @@ dark mode unless you also exclude that site.
   you add. Nothing is read from or sent from the pages.
 - **tabs**: to show the OFF badge and reload the tab when you toggle.
 - **storage** and **scripting**: to store the list and register the stylesheet.
+
+## Releasing a new version
+
+GitHub Actions (`.github/workflows/release.yml`) builds the extension on every
+push that touches `extension/`.
+
+- To publish a release, raise `"version"` in `extension/manifest.json` and push
+  to the default branch. The workflow creates release `v<version>` with the zip
+  attached. Pushes that keep the same version only build; they don't release.
+- Every build, on any branch, also keeps the zip as a download on its
+  Actions run page, for testing before a release.
+- You can also start the workflow by hand: **Actions → Build & release → Run workflow**.
