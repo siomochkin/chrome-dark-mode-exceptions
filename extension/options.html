@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <title>Dark Mode Exceptions</title>
+  <style>
+    body { font: 14px system-ui, sans-serif; margin: 16px; min-width: 360px; }
+    h1 { font-size: 16px; margin: 0 0 4px; }
+    p.hint { margin: 0 0 12px; color: GrayText; }
+    form { display: flex; gap: 8px; margin-bottom: 12px; }
+    input { flex: 1; padding: 6px 8px; }
+    button { padding: 6px 10px; cursor: pointer; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { display: flex; align-items: center; justify-content: space-between;
+         padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent); }
+    li span { font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+    .empty { color: GrayText; padding: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>Sites with auto dark mode turned off</h1>
+  <p class="hint">Click the toolbar icon on any site to add or remove it.</p>
+  <form id="add">
+    <input id="host" placeholder="example.com" autocomplete="off" spellcheck="false">
+    <button type="submit">Add</button>
+  </form>
+  <ul id="list"></ul>
+  <script src="options.js"></script>
+</body>
+</html>

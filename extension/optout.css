@@ -1,0 +1,32 @@
+/*
+ * Injected at document_start on every page of an excluded site.
+ * Content-script CSS is a user stylesheet, so these !important rules win
+ * over anything the page sets.
+ */
+
+/*
+ * 1) Clean opt-out.
+ * Chrome skips Auto Dark Mode on a page whose root declares a color-scheme
+ * while the browser's preferred scheme is dark (Chrome or OS set to dark).
+ * "only light" makes the page render exactly as its light design.
+ */
+:root {
+  color-scheme: only light !important;
+}
+
+/*
+ * 2) Fallback when the preferred scheme is light.
+ * In that case Chrome darkens every page no matter what it declares, so we
+ * undo the darkening by inverting the page back. Media is inverted twice so
+ * it keeps its original colours. This is an approximation: whites come out
+ * as a very light grey and some colours shift slightly.
+ */
+@media (prefers-color-scheme: light) {
+  :root {
+    filter: invert(1) hue-rotate(180deg) !important;
+  }
+  /* Exact inverse of the root filter (same steps, reverse order). */
+  img, video, canvas, iframe, embed, object {
+    filter: hue-rotate(180deg) invert(1) !important;
+  }
+}
